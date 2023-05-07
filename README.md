@@ -1,11 +1,8 @@
 # Adding Telemetry to OpenAI's ChatCompletion
 
-After calling `main.py` with the some simple autoinstrumentation
-
 ```python
 # Instrument the OpenAI API
 OpenAICompletionInstrumentor().instrument()
-RequestsInstrumentor().instrument()
 
 # Use the OpenAI API
 def call(prompt):
