@@ -15,6 +15,11 @@ urllib3 = "<2.0"
 opentelemetry-instrumentation-requests = "^0.38b0"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+pytest-asyncio = "^0.21.0"
+black = "^23.3.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
