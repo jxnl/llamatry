@@ -4,7 +4,7 @@ After calling `main.py` with the some simple autoinstrumentation
 
 ```python
 # Instrument the OpenAI API
-OpenAIInstrumentor().instrument()
+OpenAICompletionInstrumentor().instrument()
 RequestsInstrumentor().instrument()
 
 # Use the OpenAI API
