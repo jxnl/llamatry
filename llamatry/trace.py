@@ -1,14 +1,46 @@
 from opentelemetry import trace
 from typing import Callable, Union
 
+import inspect
+
+
+def simple_args_to_dict(func, *args, **kwargs):
+    """
+    Return a dictionary of the arguments
+    Does not include default arguments or keyword arguments that are not strings
+    This helps avoid sending too much data to the OpenTelemetry backend.
+    """
+    arg_dict = {}
+
+    # Get the names of the positional arguments
+    signature = inspect.signature(func)
+    param_names = list(signature.parameters.keys())
+
+    # Populate the dictionary with the positional arguments
+    for ii, arg in enumerate(args):
+        if isinstance(arg, (str, bool, float, int)):
+            arg_name = param_names[ii]
+            arg_dict[arg_name] = arg
+
+    # Populate the dictionary with the keyword arguments
+    for key, value in kwargs.items():
+        if isinstance(arg, (str, bool, float, int)):
+            arg_dict[key] = value
+
+    return arg_dict
+
 
 def tracer(*args: Union[str, Callable]) -> Union[Callable, None]:
     def _decorator(func: Callable, span_name: str) -> Callable:
         def wrapped(*args, **kwargs):
             tracer = trace.get_tracer("llamatry")
 
-            with tracer.start_as_current_span(span_name):
+            with tracer.start_as_current_span(span_name) as span:
                 result = func(*args, **kwargs)
+
+                arg_dict = simple_args_to_dict(func, *args, **kwargs)
+                for key, value in arg_dict.items():
+                    span.set_attribute(key, value)
 
             return result
 
@@ -37,3 +69,7 @@ class Trace:
     @classmethod
     def span(self, *args, **kwargs):
         return trace.get_tracer("llamatry").start_as_current_span(*args, **kwargs)
+
+    @classmethod
+    def get_current_span(self):
+        return trace.get_current_span()

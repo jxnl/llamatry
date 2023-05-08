@@ -74,6 +74,45 @@ response = openai.ChatCompletion.create(
 
 Traces and other information related to the OpenAI API calls will be output to the console. By using Llamatry, you can easily switch to other exporters supported by OpenTelemetry, such as Jaeger or Zipkin, to visualize and analyze the data in different ways.
 
+## Decorator and Context Manager helpers
+
+Llamatry provides a convenient tracing utility with both decorator and context manager support. This allows you to trace your functions and code blocks easily using the provided Trace class.
+
+### Using the Trace decorator
+
+To use the `Trace` class as a decorator, you can decorate your function using `@Trace.trace`. The function's name will be used as the span name by default. If you want to set a custom span name, you can provide it as an argument: `@Trace.trace("custom_span_name")`. By default if you decorate a function all arguments that are `(str, int, float, bool)` will be set as attributes.
+
+```python
+from llamatry import Trace
+
+@Trace.trace
+def your_function():
+    # Your function implementation
+    span = Trace.get_current_span()
+    span.set_attribute("foo", "bar")
+    pass
+
+@Trace.trace("custom_span_name")
+def another_function():
+    # Your function implementation
+    pass
+```
+
+### Using the Trace context manager
+
+To use the Trace class as a context manager, use the `with` statement followed by `Trace.span("custom_span_name")`.
+
+```python
+from llamatry import Trace
+
+with Trace.span("custom_span_name") as span:
+    # Your code block here
+    span.set_attribute("foo", "bar")
+    pass
+```
+
+Using the `Trace` class in this way allows you to easily trace your functions and code blocks, providing better observability and understanding of the performance and behavior of your code.
+
 ## Documentation
 
 For more information about OpenTelemetry, visit the [official OpenTelemetry Python documentation](https://opentelemetry-python.readthedocs.io/en/stable/).
