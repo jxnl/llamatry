@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "llamatry"
-version = "0.1.0"
-description = ""
+version = "0.1.3"
+description = "opentelemetry instrumentation for openai's completions api"
 authors = ["Jason <jason@jxnl.co>"]
 readme = "README.md"
+repository = "https://github.com/jxnl/llamatry"
 
 [tool.poetry.dependencies]
 python = "^3.9"
