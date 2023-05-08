@@ -30,7 +30,7 @@ async def test_chat_acreate():
                 "content": "What is the meaning of life?",
             },
         ],
-        max_tokens=500,
+        max_tokens=5,
         temperature=0.5,
         stream=False,
     )
@@ -49,7 +49,7 @@ async def test_chat_acreate_stream():
                 "content": "What is the meaning of life in a short sentence?",
             },
         ],
-        max_tokens=500,
+        max_tokens=5,
         temperature=0.5,
         stream=True,
     )
@@ -70,7 +70,7 @@ def test_chat_create_stream():
                 "content": "What is the meaning of life in a short sentence?",
             },
         ],
-        max_tokens=500,
+        max_tokens=5,
         temperature=0.5,
         stream=True,
     )
@@ -91,7 +91,7 @@ def test_chat_create():
                 "content": "What is the meaning of life in a short sentence?",
             },
         ],
-        max_tokens=500,
+        max_tokens=5,
         temperature=0.5,
     )
     assert response is not None
