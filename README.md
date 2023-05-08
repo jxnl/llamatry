@@ -86,15 +86,19 @@ To use the `Trace` class as a decorator, you can decorate your function using `@
 from llamatry import Trace
 
 @Trace.trace
-def your_function():
+def your_function(a, b):
     # Your function implementation
-    span = Trace.get_current_span()
-    span.set_attribute("foo", "bar")
+    # a, b and automatically set as span attributes
     pass
 
 @Trace.trace("custom_span_name")
 def another_function():
     # Your function implementation
+    pass
+
+with Trace.span("custom_span_name") as span:
+    # Your code block here
+    span.set_attribute("foo", "bar")
     pass
 ```
 
