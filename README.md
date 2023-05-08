@@ -1,197 +1,88 @@
-# Adding Telemetry to OpenAI's ChatCompletion
+# Llamatry
+
+Llamatry is a Python package that simplifies the process of instrumenting the OpenAI API using OpenTelemetry. It allows you to monitor and trace the interactions with the OpenAI API, providing insights into the performance and behavior of your code. By leveraging OpenTelemetry, Llamatry supports various output formats, making it easy to integrate with your existing observability stack.
+
+## Features
+
+* OpenTelemetry instrumentation for OpenAI API
+* Supports tracing and monitoring of OpenAI API interactions
+* Compatible with a wide range of output formats through OpenTelemetry
+* Easy-to-use and straightforward setup process
+
+## Installation
+
+Install Llamatry using pip:
+
+```bash
+pip install llamatry
+```
+
+## Usage
+
+To use Llamatry with the OpenAI API, follow these steps:
+
+Import the necessary packages:
 
 ```python
-# Instrument the OpenAI API
+import os
+import openai
+import logging
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
+from llamatry import OpenAICompletionInstrumentor
+```
+
+Set up OpenTelemetry:
+
+## Configure logging
+
+```python
+logging.basicConfig(level=logging.WARNING)
+```
+
+## Set up OpenTelemetry
+
+```python
+trace.set_tracer_provider(TracerProvider())
+console_exporter = ConsoleSpanExporter()
+span_processor = SimpleSpanProcessor(console_exporter)
+trace.get_tracer_provider().add_span_processor(span_processor)
+```
+
+Set up OpenAI API:
+
+```python
+openai.api_key = os.environ["OPENAI_API_KEY"]
+```
+
+Instrument the OpenAI API using Llamatry:
+
+```python
 OpenAICompletionInstrumentor().instrument()
-
-# Use the OpenAI API
-def call(prompt):
-    # get the current span 
-    span = trace.get_current_span()
-    span.set_attribute("openai.prompt", prompt)
-    response = openai.ChatCompletion.create(
-        model= "gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=500,
-        temperature=0.5,
-    )
-    span.set_attribute("openai.response", response["choices"][0]["message"]["content"])
-    
-
-
-with trace.get_tracer_provider().get_tracer(__name__).start_as_current_span("main"):
-    call("What is the meaning of life in a short sentence?")
-    call("What is the meaning of death in a long paragraph?")
 ```
 
-We get some data that looks like this:
+Make API calls to the OpenAI API:
 
-```json
-{
-    "name": "HTTP POST",
-    "context": {
-        "trace_id": "0x4f30f3348f14cca1c9473b5a2ea813de",
-        "span_id": "0xa7c761add82b78c4",
-        "trace_state": "[]"
-    },
-    "kind": "SpanKind.CLIENT",
-    "parent_id": "0x236e1b0054104fe2",
-    "start_time": "2023-05-07T02:06:41.472934Z",
-    "end_time": "2023-05-07T02:06:42.522350Z",
-    "status": {
-        "status_code": "UNSET"
-    },
-    "attributes": {
-        "http.method": "POST",
-        "http.url": "https://api.openai.com/v1/chat/completions",
-        "http.status_code": 200
-    },
-    "events": [],
-    "links": [],
-    "resource": {
-        "attributes": {
-            "telemetry.sdk.language": "python",
-            "telemetry.sdk.name": "opentelemetry",
-            "telemetry.sdk.version": "1.17.0",
-            "service.name": "unknown_service"
-        },
-        "schema_url": ""
-    }
-}
-{
-    "name": "openai.ChatCompletion.create",
-    "context": {
-        "trace_id": "0x4f30f3348f14cca1c9473b5a2ea813de",
-        "span_id": "0x236e1b0054104fe2",
-        "trace_state": "[]"
-    },
-    "kind": "SpanKind.CLIENT",
-    "parent_id": "0x104c76efec92b98b",
-    "start_time": "2023-05-07T02:06:41.438489Z",
-    "end_time": "2023-05-07T02:06:42.524253Z",
-    "status": {
-        "status_code": "UNSET"
-    },
-    "attributes": {
-        "openai.create.model": "gpt-3.5-turbo",
-        "openai.create.max_tokens": 500,
-        "openai.create.temperature": 0.5,
-        "openai.response.id": "chatcmpl-7DO5Jns0IVgSxWRjTaBUHL0VWPtyK",
-        "openai.response.created": 1683425201,
-        "openai.usage.prompt_tokens": 30,
-        "openai.usage.completion_tokens": 13,
-        "openai.usage.total_tokens": 43
-    },
-    "events": [],
-    "links": [],
-    "resource": {
-        "attributes": {
-            "telemetry.sdk.language": "python",
-            "telemetry.sdk.name": "opentelemetry",
-            "telemetry.sdk.version": "1.17.0",
-            "service.name": "unknown_service"
-        },
-        "schema_url": ""
-    }
-}
-{
-    "name": "HTTP POST",
-    "context": {
-        "trace_id": "0x4f30f3348f14cca1c9473b5a2ea813de",
-        "span_id": "0xbc74d9bcf2b194c2",
-        "trace_state": "[]"
-    },
-    "kind": "SpanKind.CLIENT",
-    "parent_id": "0xa33fc3e93fb9f06d",
-    "start_time": "2023-05-07T02:06:42.526738Z",
-    "end_time": "2023-05-07T02:06:52.524112Z",
-    "status": {
-        "status_code": "UNSET"
-    },
-    "attributes": {
-        "http.method": "POST",
-        "http.url": "https://api.openai.com/v1/chat/completions",
-        "http.status_code": 200
-    },
-    "events": [],
-    "links": [],
-    "resource": {
-        "attributes": {
-            "telemetry.sdk.language": "python",
-            "telemetry.sdk.name": "opentelemetry",
-            "telemetry.sdk.version": "1.17.0",
-            "service.name": "unknown_service"
-        },
-        "schema_url": ""
-    }
-}
-{
-    "name": "openai.ChatCompletion.create",
-    "context": {
-        "trace_id": "0x4f30f3348f14cca1c9473b5a2ea813de",
-        "span_id": "0xa33fc3e93fb9f06d",
-        "trace_state": "[]"
-    },
-    "kind": "SpanKind.CLIENT",
-    "parent_id": "0x104c76efec92b98b",
-    "start_time": "2023-05-07T02:06:42.524772Z",
-    "end_time": "2023-05-07T02:06:52.524828Z",
-    "status": {
-        "status_code": "UNSET"
-    },
-    "attributes": {
-        "openai.create.model": "gpt-3.5-turbo",
-        "openai.create.max_tokens": 500,
-        "openai.create.temperature": 0.5,
-        "openai.response.id": "chatcmpl-7DO5K8rhgWHrHEpsLizRdNa9QkzkG",
-        "openai.response.created": 1683425202,
-        "openai.usage.prompt_tokens": 30,
-        "openai.usage.completion_tokens": 175,
-        "openai.usage.total_tokens": 205
-    },
-    "events": [],
-    "links": [],
-    "resource": {
-        "attributes": {
-            "telemetry.sdk.language": "python",
-            "telemetry.sdk.name": "opentelemetry",
-            "telemetry.sdk.version": "1.17.0",
-            "service.name": "unknown_service"
-        },
-        "schema_url": ""
-    }
-}
-{
-    "name": "main",
-    "context": {
-        "trace_id": "0x4f30f3348f14cca1c9473b5a2ea813de",
-        "span_id": "0x104c76efec92b98b",
-        "trace_state": "[]"
-    },
-    "kind": "SpanKind.INTERNAL",
-    "parent_id": null,
-    "start_time": "2023-05-07T02:06:41.438400Z",
-    "end_time": "2023-05-07T02:06:52.525255Z",
-    "status": {
-        "status_code": "UNSET"
-    },
-    "attributes": {
-        "openai.prompt": "What is the meaning of death in a long paragraph?",
-        "openai.response": "Death is the cessation of life. It is the final stage of life where the physical body ceases to function. Death is a natural process that occurs to all living beings, and it is an inevitable part of life. The meaning of death can vary depending on one's beliefs and cultural background. Some view death as a transition to an afterlife, while others see it as the end of existence. Death can also be seen as a release from suffering and pain, or as a tragedy that leaves loved ones behind. The meaning of death can be complex and emotional, and it is often accompanied by grief and mourning. It is a reminder of the fragility of life and the importance of cherishing the time we have with loved ones. Ultimately, the meaning of death is subjective and personal, and it is up to each individual to make sense of it in their own way."
-    },
-    "events": [],
-    "links": [],
-    "resource": {
-        "attributes": {
-            "telemetry.sdk.language": "python",
-            "telemetry.sdk.name": "opentelemetry",
-            "telemetry.sdk.version": "1.17.0",
-            "service.name": "unknown_service"
-        },
-        "schema_url": ""
-    }
-}
+```python
+response = openai.ChatCompletion.create(
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Who won the world series in 2020?"},
+    ],
+    max_tokens=50,
+    temperature=0.5,
+)
 ```
+
+Traces and other information related to the OpenAI API calls will be output to the console. By using Llamatry, you can easily switch to other exporters supported by OpenTelemetry, such as Jaeger or Zipkin, to visualize and analyze the data in different ways.
+
+## Documentation
+
+For more information about OpenTelemetry, visit the [official OpenTelemetry Python documentation](https://opentelemetry-python.readthedocs.io/en/stable/).
+
+For more information about the OpenAI API, visit the [official OpenAI API documentation](https://beta.openai.com/docs/).
+
+## License
+
+Llamatry is released under the [MIT License](https://opensource.org/licenses/MIT).

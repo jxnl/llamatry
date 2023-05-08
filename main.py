@@ -34,19 +34,13 @@ def call(prompt):
         ],
         max_tokens=500,
         temperature=0.5,
-        stream=True,
     )
     # add attributes to the span to capture the prompt and response
     # this will be exported to the console but one can imagine this doing into
     # a database or other storage for search or review later
-    with trace.get_tracer_provider().get_tracer(__name__).start_as_current_span(
-        "openai.ChatCompletion.create"
-    ) as span:
-        resp = ""
-        span.set_attribute("openai.prompt", prompt)
-        for obj in response:
-            resp += obj["choices"][0]["delta"].get("content", "")
-        span.set_attribute("openai.response", resp)
+    span = trace.get_current_span()
+    span.set_attribute("openai.prompt", prompt)
+    span.set_attribute("openai.response", response["choices"][0]["message"]["content"])
 
 
 if __name__ == "__main__":
