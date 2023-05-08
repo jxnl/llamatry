@@ -5,7 +5,7 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from llamatry import OpenAIInstrumentor
+from llamatry import OpenAICompletionInstrumentor, Trace
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)
@@ -20,11 +20,12 @@ trace.get_tracer_provider().add_span_processor(
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # Instrument the OpenAI API
-OpenAIInstrumentor().instrument()
+OpenAICompletionInstrumentor().instrument()
 RequestsInstrumentor().instrument()
 
 
 # Use the OpenAI API
+@Trace.trace
 def call(prompt):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -44,8 +45,8 @@ def call(prompt):
 
 
 if __name__ == "__main__":
-    # imagine this is a web request or other entry point to the application
-    with trace.get_tracer_provider().get_tracer(__name__).start_as_current_span(
-        "entrypoint"
-    ):
+    call("What is the meaning of life in a short sentence?")
+
+    with Trace.span("span") as span:
         call("What is the meaning of life in a short sentence?")
+        span.set_attribute("foo", "bar")

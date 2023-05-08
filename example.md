@@ -1,4 +1,6 @@
-# Adding Telemetry to OpenAI's ChatCompletion
+# Example of Instrumentation 
+
+
 
 ```python
 # Instrument the OpenAI API
