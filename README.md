@@ -1,4 +1,4 @@
-# Llamatry
+# [Llamatry](https://github.com/jxnl/llamatry)
 
 Llamatry is a Python package that simplifies the process of instrumenting the OpenAI API using OpenTelemetry. It allows you to monitor and trace the interactions with the OpenAI API, providing insights into the performance and behavior of your code. By leveraging OpenTelemetry, Llamatry supports various output formats, making it easy to integrate with your existing observability stack.
 
