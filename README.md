@@ -2,6 +2,10 @@
 
 Llamatry is a Python package that simplifies the process of instrumenting the OpenAI API using OpenTelemetry. It allows you to monitor and trace the interactions with the OpenAI API, providing insights into the performance and behavior of your code. By leveraging OpenTelemetry, Llamatry supports various output formats, making it easy to integrate with your existing observability stack.
 
+## Why?
+
+Observability is essential for complex applications using large language models (LLMs), as it provides transparency, performance insights, and control over your data and even costs. By integrating observability into your LLM tooling, you can better understand their inner workings, optimize resource usage, and streamline your workflow. Owning your data and leveraging observability empowers you to take control of your AI application's performance.
+
 ## Features
 
 * OpenTelemetry instrumentation for OpenAI API
@@ -24,24 +28,17 @@ To use Llamatry with the OpenAI API, follow these steps:
 Import the necessary packages:
 
 ```python
-import os
-import openai
-import logging
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
+
 from llamatry import OpenAICompletionInstrumentor
+
+import openai
+import os
 ```
 
-Set up OpenTelemetry:
-
-## Configure logging
-
-```python
-logging.basicConfig(level=logging.WARNING)
-```
-
-## Set up OpenTelemetry
+Set up open telemetry:
 
 ```python
 trace.set_tracer_provider(TracerProvider())
