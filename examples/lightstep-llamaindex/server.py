@@ -5,7 +5,7 @@ from flask import Flask, request
 import openai
 from opentelemetry.launcher import configure_opentelemetry
 
-from llamatry import OpenAICompletionInstrumentor, Trace
+from llamatry import Trace, OpenAIInstrumentor
 
 from llama_index import GPTVectorStoreIndex, SimpleDirectoryReader
 from llama_index import StorageContext, load_index_from_storage
@@ -24,28 +24,29 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # rebuild storage context
 if os.path.exists("./storage"):
-    storage_context = StorageContext.from_defaults(persist_dir="./storage")
-    index = load_index_from_storage(storage_context)
+    with Trace.span("StorageContext.from_defaults"):
+        storage_context = StorageContext.from_defaults(persist_dir="./storage")
+        index = load_index_from_storage(storage_context)
 else:
     documents = SimpleDirectoryReader("data").load_data()
     index = GPTVectorStoreIndex.from_documents(documents)
     index.storage_context.persist()
 
-query_engine = index.as_query_engine()
+with Trace.span("index.as_query_engine"):
+    query_engine = index.as_query_engine()
+
+
+query_engine.query = Trace.trace("query_engine.query")(query_engine.query)
 
 
 @app.route("/ask", methods=["POST"])
 def ask():
     query = request.get_json()["query"]
-
-    with Trace.span("query_engine") as span:
-        response = query_engine.query(query)
-        span.set_attribute("response", response)
-        span.set_attribute("query", query)
-        return {"content": str(response)}
+    response = query_engine.query(query)
+    return {"content": str(response)}
 
 
-OpenAICompletionInstrumentor().instrument()
+OpenAIInstrumentor().instrument()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=PORT)
