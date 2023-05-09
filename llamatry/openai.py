@@ -51,6 +51,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         """
         for key, value in kwargs.items():
             if isinstance(value, (str, bool, float, int)) and key != "prompt":
+                # Don't set the prompt attribute as it may be too large
                 span.set_attribute(f"openai.create.{key}", value)
 
         for key in ["id", "created", "model"]:
@@ -70,7 +71,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             tracer = trace.get_tracer(__name__)
 
             with tracer.start_as_current_span(
-                original_create.__qualname__,
+                f"openai.{original_create.__qualname__}",
             ) as span:
                 if stream:
 

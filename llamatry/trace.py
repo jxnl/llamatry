@@ -1,3 +1,4 @@
+import functools
 from opentelemetry import trace
 from typing import Callable, Union
 
@@ -32,6 +33,7 @@ def simple_args_to_dict(func, *args, **kwargs):
 
 def tracer(*args: Union[str, Callable]) -> Union[Callable, None]:
     def _decorator(func: Callable, span_name: str) -> Callable:
+        @functools.wraps(func)
         def wrapped(*args, **kwargs):
             tracer = trace.get_tracer("llamatry")
 
@@ -56,7 +58,13 @@ def tracer(*args: Union[str, Callable]) -> Union[Callable, None]:
     elif len(args) == 1 and callable(args[0]):
         # If the argument is a function, use the function name as the span name
         # Example usage: @trace_decorator
-        return _decorator(args[0], args[0].__name__)
+        name = (
+            args[0].__name__
+            if not hasattr(args[0], "__qualname__")
+            else args[0].__qualname__
+        )
+
+        return _decorator(args[0], name)
     else:
         raise ValueError("Invalid arguments for trace_decorator")
 
