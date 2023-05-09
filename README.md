@@ -74,7 +74,7 @@ response = openai.ChatCompletion.create(
 
 Console Export:
 
-```
+```json
 {
     "name": "ChatCompletion.create",
     "context": {
