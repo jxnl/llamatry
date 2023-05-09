@@ -1,0 +1,6 @@
+Flask
+opentelemetry-instrumentation-flask
+opentelemetry-instrumentation-requests
+opentelemetry-launcher
+llama-index
+requests

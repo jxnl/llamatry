@@ -1,2 +1,3 @@
 /.venv
 dist/
+examples/lightstep-llamaindex/storage/
