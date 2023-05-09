@@ -44,22 +44,10 @@ class OpenAICompletionInstrumentor(BaseInstrumentor):
             if isinstance(value, (str, bool, float, int)) and key != "prompt":
                 span.set_attribute(f"openai.create.{key}", value)
 
-        usage = response.get("usage", {})
         span.set_attribute("openai.response.id", response.get("id", ""))
         span.set_attribute("openai.response.created", response.get("created", 0))
-
-        # only set these attributes if the response is a stream since the are
-        # not present in the non-streaming response
-        if kwargs.get("stream", False):
-            span.set_attribute(
-                "openai.usage.prompt_tokens", usage.get("prompt_tokens", None)
-            )
-            span.set_attribute(
-                "openai.usage.completion_tokens", usage.get("completion_tokens", None)
-            )
-            span.set_attribute(
-                "openai.usage.total_tokens", usage.get("total_tokens", None)
-            )
+        span.set_attribute("openai.response.usage", response.get("usage", None))
+        span.set_attribute("openai.response.model", response.get("model", None))
 
     def _trace_create(self, original_create):
         @functools.wraps(original_create)
