@@ -4,6 +4,8 @@ from typing import Callable, Union
 
 import inspect
 
+tracer = trace.get_tracer("llamatry")
+
 
 def simple_args_to_dict(func, *args, **kwargs):
     """
@@ -31,12 +33,10 @@ def simple_args_to_dict(func, *args, **kwargs):
     return arg_dict
 
 
-def tracer(*args: Union[str, Callable]) -> Union[Callable, None]:
+def trace_decorator(*args: Union[str, Callable]) -> Union[Callable, None]:
     def _decorator(func: Callable, span_name: str) -> Callable:
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
-            tracer = trace.get_tracer("llamatry")
-
             with tracer.start_as_current_span(span_name) as span:
                 result = func(*args, **kwargs)
 
@@ -72,12 +72,12 @@ def tracer(*args: Union[str, Callable]) -> Union[Callable, None]:
 class Trace:
     @classmethod
     def trace(cls, *args, **kwargs):
-        return tracer(*args, **kwargs)
+        return trace_decorator(*args, **kwargs)
 
     @classmethod
     def span(self, *args, **kwargs):
-        return trace.get_tracer("llamatry").start_as_current_span(*args, **kwargs)
+        return tracer.start_as_current_span(*args, **kwargs)
 
     @classmethod
     def get_current_span(self):
-        return trace.get_current_span()
+        return tracer.get_current_span()
