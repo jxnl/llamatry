@@ -1,4 +1,4 @@
 from llamatry.trace import Trace
-from llamatry.completions import OpenAICompletionInstrumentor
+from llamatry.openai import OpenAIInstrumentor
 
-__all__ = ["OpenAICompletionInstrumentor", "Trace"]
+__all__ = ["OpenAIInstrumentor", "Trace"]

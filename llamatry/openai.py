@@ -6,12 +6,15 @@ from opentelemetry.trace import SpanKind
 import openai
 
 
-class OpenAICompletionInstrumentor(BaseInstrumentor):
+class OpenAIInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         self._original_chatcompletion_create = openai.ChatCompletion.create
         self._original_chatcompletion_acreate = openai.ChatCompletion.acreate
         self._original_create = openai.Completion.create
         self._original_acreate = openai.Completion.acreate
+        self._original_embeddings_create = openai.Embedding.create
+        self._original_embeddings_acreate = openai.Embedding.acreate
+
         openai.ChatCompletion.create = self._trace_create(
             self._original_chatcompletion_create
         )
@@ -20,12 +23,18 @@ class OpenAICompletionInstrumentor(BaseInstrumentor):
         )
         openai.Completion.create = self._trace_create(self._original_create)
         openai.Completion.acreate = self._trace_acreate(self._original_acreate)
+        openai.Embedding.create = self._trace_create(self._original_embeddings_create)
+        openai.Embedding.acreate = self._trace_acreate(
+            self._original_embeddings_acreate
+        )
 
     def _uninstrument(self, **kwargs):
         openai.ChatCompletion.create = self._original_chatcompletion_create
         openai.ChatCompletion.acreate = self._original_chatcompletion_acreate
         openai.Completion.create = self._original_completion_create
         openai.Completion.acreate = self._original_completion_acreate
+        openai.Embedding.create = self._original_embeddings_create
+        openai.Embedding.acreate = self._original_embeddings_acreate
 
     def instrumentation_dependencies(self) -> Collection[BaseInstrumentor]:
         return []
@@ -44,17 +53,15 @@ class OpenAICompletionInstrumentor(BaseInstrumentor):
             if isinstance(value, (str, bool, float, int)) and key != "prompt":
                 span.set_attribute(f"openai.create.{key}", value)
 
-        span.set_attribute("openai.id", response.get("id", ""))
-        span.set_attribute("openai.created", response.get("created", 0))
-        span.set_attribute("openai.model", response.get("model", None))
+        for key in ["id", "created", "model"]:
+            if key in response:
+                span.set_attribute(f"openai.response.{key}", response[key])
 
         usage = response.get("usage", None)
         if usage:
-            span.set_attribute("openai.usage.completion_tokens", usage.get("completion_tokens", 0))
-            span.set_attribute("openai.usage.prompt_tokens", usage.get("prompt_tokens", 0))
-            span.set_attribute("openai.usage.total_tokens", usage.get("total_tokens", 0))
-
-
+            for key in ["completion_tokens", "prompt_tokens", "total_tokens"]:
+                if key in usage:
+                    span.set_attribute(f"openai.usage.{key}", usage[key])
 
     def _trace_create(self, original_create):
         @functools.wraps(original_create)
@@ -63,7 +70,7 @@ class OpenAICompletionInstrumentor(BaseInstrumentor):
             tracer = trace.get_tracer(__name__)
 
             with tracer.start_as_current_span(
-                "openai.ChatCompletion.create", kind=SpanKind.CLIENT
+                original_create.__qualname__,
             ) as span:
                 if stream:
 
@@ -89,7 +96,7 @@ class OpenAICompletionInstrumentor(BaseInstrumentor):
             stream = kwargs.get("stream", False)
             tracer = trace.get_tracer(__name__)
             with tracer.start_as_current_span(
-                "openai.ChatCompletion.acreate", kind=SpanKind.CLIENT
+                f"openai.{original_acreate.__qualname__}"
             ) as span:
                 response = await original_acreate(*args, **kwargs)
                 if stream:

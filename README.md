@@ -32,7 +32,7 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 
-from llamatry import OpenAICompletionInstrumentor
+from llamatry import OpenAIInstrumentor
 
 import openai
 import os
@@ -56,7 +56,7 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 Instrument the OpenAI API using Llamatry:
 
 ```python
-OpenAICompletionInstrumentor().instrument()
+OpenAIInstrumentor().instrument()
 ```
 
 Make API calls to the OpenAI API:
@@ -70,6 +70,48 @@ response = openai.ChatCompletion.create(
     max_tokens=50,
     temperature=0.5,
 )
+```
+
+Console Export:
+
+```
+{
+    "name": "ChatCompletion.create",
+    "context": {
+        "trace_id": "0x6026b10ff364a1954df343ac2e292fd7",
+        "span_id": "0x3f04991076717d88",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": "0x14abcdaf2d49f177",
+    "start_time": "2023-05-09T20:32:10.674716Z",
+    "end_time": "2023-05-09T20:32:11.827791Z",
+    "status": {
+        "status_code": "UNSET"
+    },
+    "attributes": {
+        "openai.create.model": "gpt-3.5-turbo",
+        "openai.create.max_tokens": 500,
+        "openai.create.temperature": 0.5,
+        "openai.response.id": "chatcmpl-7EOIE4fVofq83WPl1HFNkDI6yBPZ8",
+        "openai.response.created": 1683664330,
+        "openai.response.model": "gpt-3.5-turbo-0301",
+        "openai.usage.completion_tokens": 13,
+        "openai.usage.prompt_tokens": 30,
+        "openai.usage.total_tokens": 43
+    },
+    "events": [],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "telemetry.sdk.language": "python",
+            "telemetry.sdk.name": "opentelemetry",
+            "telemetry.sdk.version": "1.17.0",
+            "service.name": "llamatry"
+        },
+        "schema_url": ""
+    }
+}
 ```
 
 Traces and other information related to the OpenAI API calls will be output to the console. By using Llamatry, you can easily switch to other exporters supported by OpenTelemetry, such as Jaeger or Zipkin, to visualize and analyze the data in different ways.

@@ -4,7 +4,7 @@ import pytest
 import logging
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
-from llamatry import OpenAICompletionInstrumentor
+from llamatry import OpenAIInstrumentor
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)
@@ -16,7 +16,7 @@ trace.set_tracer_provider(TracerProvider())
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # Instrument the OpenAI API
-OpenAICompletionInstrumentor().instrument()
+OpenAIInstrumentor().instrument()
 
 
 @pytest.mark.asyncio
