@@ -4,13 +4,20 @@ import logging
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from llamatry import OpenAICompletionInstrumentor, Trace
 
-# Configure logging
-logging.basicConfig(level=logging.WARNING)
+from opentelemetry import metrics
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import (
+    PeriodicExportingMetricReader,
+    ConsoleMetricExporter,
+)
 
-# Set up OpenTelemetry
+# Set up OpenTelemtry Metrics to export to console
+reader = PeriodicExportingMetricReader(ConsoleMetricExporter())
+provider = MeterProvider(metric_readers=[reader])
+metrics.set_meter_provider(provider)
+
+# Set up OpenTelemetry Tracing to export to console
 trace.set_tracer_provider(TracerProvider())
 trace.get_tracer_provider().add_span_processor(
     SimpleSpanProcessor(ConsoleSpanExporter())
@@ -20,14 +27,17 @@ trace.get_tracer_provider().add_span_processor(
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # Instrument the OpenAI API
-OpenAICompletionInstrumentor().instrument()
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from llamatry import Trace, OpenAIInstrumentor
+
+OpenAIInstrumentor().instrument()
 RequestsInstrumentor().instrument()
 
 
 # Use the OpenAI API
-@Trace.trace
+@Trace.trace("entry_point")
 def call(prompt):
-    response = openai.ChatCompletion.create(
+    openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
@@ -36,17 +46,7 @@ def call(prompt):
         max_tokens=500,
         temperature=0.5,
     )
-    # add attributes to the span to capture the prompt and response
-    # this will be exported to the console but one can imagine this doing into
-    # a database or other storage for search or review later
-    span = trace.get_current_span()
-    span.set_attribute("openai.prompt", prompt)
-    span.set_attribute("openai.response", response["choices"][0]["message"]["content"])
 
 
 if __name__ == "__main__":
     call("What is the meaning of life in a short sentence?")
-
-    with Trace.span("span") as span:
-        call("What is the meaning of life in a short sentence?")
-        span.set_attribute("foo", "bar")
