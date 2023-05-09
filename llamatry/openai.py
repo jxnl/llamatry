@@ -1,9 +1,11 @@
 import functools
 from typing import Collection
 from opentelemetry import trace
+from opentelemetry import metrics
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import SpanKind
 import openai
+
+tracer = trace.get_tracer("llamatry")
 
 
 class OpenAIInstrumentor(BaseInstrumentor):
@@ -40,7 +42,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         return []
 
     @staticmethod
-    def _set_span_attributes(span, kwargs, response):
+    def _handle_attributes(span, kwargs, response):
         """
         Set attributes on the span for the prompt and response, purposefully
         ignoring the prompt and response attributes as they are may be too large
@@ -59,16 +61,24 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 span.set_attribute(f"openai.response.{key}", response[key])
 
         usage = response.get("usage", None)
+        model = response.get("model", "__unknown__")
         if usage:
             for key in ["completion_tokens", "prompt_tokens", "total_tokens"]:
                 if key in usage:
                     span.set_attribute(f"openai.usage.{key}", usage[key])
 
+                    # Create a counter for the usage metric for each type of prompt token usage
+                    meter = metrics.get_meter(f"openai.{model}")
+                    counter = meter.create_counter(
+                        name=key,
+                        description=f"OpenAI {model} {key}",
+                    )
+                    counter.add(usage[key])
+
     def _trace_create(self, original_create):
         @functools.wraps(original_create)
         def wrapper(*args, **kwargs):
             stream = kwargs.get("stream", False)
-            tracer = trace.get_tracer(__name__)
 
             with tracer.start_as_current_span(
                 f"openai.{original_create.__qualname__}",
@@ -79,14 +89,14 @@ class OpenAIInstrumentor(BaseInstrumentor):
                         first_chunk = True
                         for resp in original_create(*args, **kwargs):
                             if first_chunk:
-                                self._set_span_attributes(span, kwargs, resp)
+                                self._handle_attributes(span, kwargs, resp)
                                 first_chunk = False
                             yield resp
 
                     return stream_wrapper()
                 else:
                     response = original_create(*args, **kwargs)
-                    self._set_span_attributes(span, kwargs, response)
+                    self._handle_attributes(span, kwargs, response)
                     return response
 
         return wrapper
@@ -95,7 +105,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
         @functools.wraps(original_acreate)
         async def wrapper(*args, **kwargs):
             stream = kwargs.get("stream", False)
-            tracer = trace.get_tracer(__name__)
             with tracer.start_as_current_span(
                 f"openai.{original_acreate.__qualname__}"
             ) as span:
@@ -106,13 +115,13 @@ class OpenAIInstrumentor(BaseInstrumentor):
                         first_chunk = True
                         async for resp in response:
                             if first_chunk:
-                                self._set_span_attributes(span, kwargs, resp)
+                                self._handle_attributes(span, kwargs, resp)
                                 first_chunk = False
                             yield resp
 
                     return stream_wrapper()
                 else:
-                    self._set_span_attributes(span, kwargs, response)
+                    self._handle_attributes(span, kwargs, response)
                     return response  # type: ignore
 
         return wrapper
