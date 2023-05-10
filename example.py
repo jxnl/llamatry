@@ -1,6 +1,5 @@
 import os
 import openai
-import logging
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
@@ -28,14 +27,14 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # Instrument the OpenAI API
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from llamatry import Trace, OpenAIInstrumentor
+from llamatry import tracer, OpenAIInstrumentor
 
 OpenAIInstrumentor().instrument()
 RequestsInstrumentor().instrument()
 
 
 # Use the OpenAI API
-@Trace.trace("entry_point")
+@tracer.wrap("entry_point")
 def call(prompt):
     openai.ChatCompletion.create(
         model="gpt-3.5-turbo",

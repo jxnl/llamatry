@@ -4,7 +4,7 @@ from typing import Callable, Union
 
 import inspect
 
-tracer = trace.get_tracer("llamatry")
+_tracer = trace.get_tracer("llamatry")
 
 
 def simple_args_to_dict(func, *args, **kwargs):
@@ -37,7 +37,7 @@ def trace_decorator(*args: Union[str, Callable]) -> Union[Callable, None]:
     def _decorator(func: Callable, span_name: str) -> Callable:
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
-            with tracer.start_as_current_span(span_name) as span:
+            with _tracer.start_as_current_span(span_name) as span:
                 result = func(*args, **kwargs)
 
                 arg_dict = simple_args_to_dict(func, *args, **kwargs)
@@ -69,15 +69,15 @@ def trace_decorator(*args: Union[str, Callable]) -> Union[Callable, None]:
         raise ValueError("Invalid arguments for trace_decorator")
 
 
-class Trace:
+class tracer:
     @classmethod
-    def trace(cls, *args, **kwargs):
+    def wrap(cls, *args, **kwargs):
         return trace_decorator(*args, **kwargs)
 
     @classmethod
-    def span(self, *args, **kwargs):
-        return tracer.start_as_current_span(*args, **kwargs)
+    def trace(self, *args, **kwargs):
+        return _tracer.start_as_current_span(*args, **kwargs)
 
     @classmethod
     def get_current_span(self):
-        return tracer.get_current_span()
+        return _tracer.get_current_span()

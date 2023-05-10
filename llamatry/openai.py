@@ -1,9 +1,9 @@
 import functools
 from typing import Collection
 from opentelemetry import trace
-from opentelemetry import metrics
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 import openai
+import json
 
 tracer = trace.get_tracer("llamatry")
 
@@ -52,9 +52,10 @@ class OpenAIInstrumentor(BaseInstrumentor):
         :param response: the response from the create method
         """
         for key, value in kwargs.items():
-            if isinstance(value, (str, bool, float, int)) and key != "prompt":
-                # Don't set the prompt attribute as it may be too large
+            if isinstance(value, (str, bool, float, int)):
                 span.set_attribute(f"openai.create.{key}", value)
+            elif isinstance(value, (list, dict)):
+                span.set_attribute(f"openai.create.{key}", json.dumps(value))
 
         for key in ["id", "created", "model"]:
             if key in response:
@@ -66,14 +67,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             for key in ["completion_tokens", "prompt_tokens", "total_tokens"]:
                 if key in usage:
                     span.set_attribute(f"openai.usage.{key}", usage[key])
-
-                    # Create a counter for the usage metric for each type of prompt token usage
-                    meter = metrics.get_meter(f"openai.{model}")
-                    counter = meter.create_counter(
-                        name=key,
-                        description=f"OpenAI {model} {key}",
-                    )
-                    counter.add(usage[key])
+        span.set_attribute("openai.response", json.dumps(response))
 
     def _trace_create(self, original_create):
         @functools.wraps(original_create)

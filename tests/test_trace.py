@@ -1,10 +1,10 @@
 import pytest
 import asyncio
-from llamatry import Trace
+from llamatry import tracer
 
 
 def test_decorator():
-    @Trace.trace
+    @tracer.wrap
     def add(a, b):
         return a + b
 
@@ -12,7 +12,7 @@ def test_decorator():
 
 
 def test_decorator_with_name():
-    @Trace.trace("add")
+    @tracer.wrap("add")
     def add(a, b):
         return a + b
 
@@ -21,7 +21,7 @@ def test_decorator_with_name():
 
 @pytest.mark.asyncio
 async def test_decorator_async():
-    @Trace.trace
+    @tracer.wrap
     async def add(a, b):
         return a + b
 
@@ -30,7 +30,7 @@ async def test_decorator_async():
 
 @pytest.mark.asyncio
 async def test_decorator_async_with_name():
-    @Trace.trace("add")
+    @tracer.wrap("add")
     async def add(a, b):
         return a + b
 
@@ -38,11 +38,11 @@ async def test_decorator_async_with_name():
 
 
 def test_decorator_with_tracer():
-    with Trace.span("add") as span:
+    with tracer.trace("add") as span:
         assert 1 + 2 == 3
 
 
 @pytest.mark.asyncio
 async def test_decorator_async_with_tracer():
-    with Trace.span("add") as span:
+    with tracer.trace("add") as span:
         await asyncio.sleep(1)
